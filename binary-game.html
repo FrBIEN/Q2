@@ -98,21 +98,22 @@
   #bgp .bgp-badge.down { background: #fef2f2; color: #b91c1c; }
   #bgp tfoot td { font-weight: 700; color: var(--muted); border-bottom: none; padding-top: .8rem; }
   #bgp .bgp-hint { font-size: .78rem; color: var(--muted); margin-top: .6rem; }
-</style>
 
+  /* Spielen-Button */
   #bgp .bgp-play { position: relative; display: inline-flex; align-items: center; gap: .5rem; margin-top: 1rem;
          padding: .65rem 1.3rem; border-radius: 999px; background: var(--accent); color: #0f172a !important;
          font-weight: 800; font-size: 1rem; text-decoration: none !important;
-         box-shadow: 0 0 0 0 rgba(34,211,238,.5); transition: transform .15s, box-shadow .2s, background .2s; }
+         transition: transform .15s, box-shadow .2s, background .2s; }
   #bgp .bgp-play:hover { transform: translateY(-2px); background: #67e8f9; box-shadow: 0 8px 24px rgba(34,211,238,.35); }
   #bgp .bgp-play span { font-family: ui-monospace, Consolas, monospace; font-size: .8rem; opacity: .7; }
-  
+</style>
+
 <div class="bgp-hero">
   <div class="bgp-bits"></div>
   <div class="bgp-kicker">01000010 · Binary Game</div>
   <h3>Unser Fortschritt</h3>
   <p>Wie schnell rechnen wir zwischen Dezimal- und Binärzahlen um? Hier seht ihr eure Ergebnisse über alle Spielrunden hinweg.</p>
-    <a class="bgp-play" href="https://learningcontent.cisco.com/games/binary/index.html" target="_blank" rel="noopener">▶ Jetzt spielen <span>0b1</span></a>
+  <a class="bgp-play" href="https://learningcontent.cisco.com/games/binary/index.html" target="_blank" rel="noopener">▶ Jetzt spielen <span>0b1</span></a>
 </div>
 
 <div class="bgp-kpis"></div>
@@ -142,21 +143,21 @@
 (function () {
   /* ===================== HIER DATEN PFLEGEN ===================== */
   // Spieltermine in zeitlicher Reihenfolge (JJJJ-MM-TT)
-  const TERMINE = ["2026-11-26", "2026-11-27"];
+  const TERMINE = ["2026-11-26", "2026-11-27", "2026-12-03", "2026-12-10", "2026-12-17", "2026-12-18"];
 
   // Pro Person ein Eintrag. Reihenfolge der Werte = Reihenfolge der Termine.
-  // null = an dem Termin nicht gespielt
+  // 0 durch das heutige Ergebnis ersetzen; null = (noch) nicht gespielt
   const SUS = [
-    { name: "Bardh",   punkte: [ 10650, null] },
-    { name: "Ronja",    punkte: [8850, null] },
-    { name: "Shams",    punkte: [ null, null] },
-    { name: "Kiran",   punkte: [12275, null] },
-    { name: "Ahmad",   punkte: [ 10850, null] },
-    { name: "Naufal",  punkte: [ null, null] }
-     { name: "Mika",  punkte: [ 10200, null] }
-   { name: "Jolina",  punkte: [ 7750, null] }
-   { name: "Enno",  punkte: [ null, null] }
-   { name: "Daniel",  punkte: [ 9100, null] }
+    { name: "Bardh",   punkte: [10650, null, null, null, null, null] },
+    { name: "Ronja",   punkte: [8850, null, null, null, null, null] },
+    { name: "Shams",   punkte: [null, null, null, null, null, null] },
+    { name: "Kiran",   punkte: [12275, null, null, null, null, null] },
+    { name: "Ahmad",   punkte: [10850, null, null, null, null, null] },
+    { name: "Naufal",   punkte: [null, null, null, null, null, null] },
+    { name: "Mika",   punkte: [10200, null, null, null, null, null] },
+    { name: "Jolina",   punkte: [7750, null, null, null, null, null] },
+    { name: "Enno",   punkte: [null, null, null, null, null, null] },
+    { name: "Daniel",  punkte: [9100, null, null, null, null, null] }
   ];
 
   const EINHEIT = "Punkte";
@@ -206,7 +207,7 @@
   const schnittLetzt = schnittWerte[schnittWerte.length - 1];
   const schnittDiff = schnittWerte.length > 1 ? schnittLetzt - schnittWerte[0] : null;
   const kacheln = [
-    { label: "Spielrunden", value: TERMINE.length,
+    { label: "Spielrunden", value: schnittWerte.length,
       note: `seit dem <b>${fmtDatum(TERMINE[0])}</b>` },
     { label: "Ø Klasse zuletzt", value: schnittLetzt != null ? fmtZahl(schnittLetzt) : "–",
       note: schnittDiff != null ? `<span class="bgp-pos">${schnittDiff >= 0 ? "+" : ""}${fmtZahl(schnittDiff)}</span> seit Start` : "" },
