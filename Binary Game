@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Binary Game – Fortschritt</title>
+<style>body{margin:0;padding:16px;background:#f1f5f9;}</style>
+</head>
+<body>
+<div id="bgp">
+<style>
+  #bgp { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --soft:#f8fafc; --accent:#22d3ee; --accent2:#6366f1;
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink);
+         max-width: 960px; margin: 0 auto; font-variant-numeric: tabular-nums; }
+  #bgp * { box-sizing: border-box; }
+
+  /* Banner */
+  #bgp .bgp-hero { position: relative; overflow: hidden; border-radius: 18px; padding: 1.6rem 1.8rem;
+         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%); color: #fff; margin-bottom: 1rem; }
+  #bgp .bgp-bits { position: absolute; inset: 0; font-family: ui-monospace, "SF Mono", Consolas, monospace;
+         font-size: 13px; line-height: 1.35; letter-spacing: .25em; color: var(--accent); opacity: .13;
+         word-break: break-all; padding: .5rem; user-select: none; pointer-events: none;
+         -webkit-mask-image: linear-gradient(90deg, transparent 10%, #000 70%); mask-image: linear-gradient(90deg, transparent 10%, #000 70%); }
+  #bgp .bgp-kicker { position: relative; font-family: ui-monospace, Consolas, monospace; font-size: .8rem;
+         letter-spacing: .2em; color: var(--accent); text-transform: uppercase; }
+  #bgp .bgp-hero h3 { position: relative; margin: .3rem 0 .35rem; font-size: 1.9rem; font-weight: 800; letter-spacing: -.01em; color:#fff; }
+  #bgp .bgp-hero p { position: relative; margin: 0; color: #c7d2fe; font-size: .95rem; max-width: 36rem; }
+
+  /* Kacheln */
+  #bgp .bgp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+  #bgp .bgp-kpi { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: .9rem 1rem;
+         box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 18px rgba(15,23,42,.05); }
+  #bgp .bgp-kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  #bgp .bgp-kpi-value { font-size: 1.7rem; font-weight: 800; margin-top: .15rem; line-height: 1.1; }
+  #bgp .bgp-kpi-note { font-size: .82rem; color: var(--muted); margin-top: .2rem; }
+  #bgp .bgp-kpi-note b { color: var(--ink); }
+  #bgp .bgp-pos { color: #059669 !important; font-weight: 700; }
+
+  /* Karten */
+  #bgp .bgp-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 1.2rem 1.2rem 1rem;
+         margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.06); }
+  #bgp .bgp-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: .4rem; }
+  #bgp .bgp-card-head h4 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+  #bgp .bgp-card-head span { font-size: .82rem; color: var(--muted); }
+
+  /* Diagramm */
+  #bgp .bgp-chartwrap { position: relative; }
+  #bgp svg.bgp-main { width: 100%; height: auto; display: block; overflow: visible; }
+  #bgp .bgp-grid line { stroke: #eef2f7; }
+  #bgp .bgp-axis text { fill: var(--muted); font-size: 12px; }
+  #bgp .bgp-guide { stroke: #cbd5e1; stroke-dasharray: 3 4; opacity: 0; transition: opacity .15s; }
+  #bgp .bgp-line path.l { fill: none; stroke-width: 2.4; stroke-linecap: round; transition: opacity .25s, stroke-width .25s; }
+  #bgp .bgp-line path.a { stroke: none; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  #bgp .bgp-line circle { stroke: #fff; stroke-width: 2; cursor: pointer; transition: opacity .25s, r .15s; }
+  #bgp .bgp-line circle:hover { r: 7; }
+  #bgp .bgp-line.dim { opacity: .1; }
+  #bgp .bgp-line.hi path.l { stroke-width: 4.5; }
+  #bgp .bgp-line.hi path.a { opacity: 1; }
+  #bgp .bgp-avg path.l { stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 7 6; fill: none; }
+  #bgp .bgp-avg path.a { fill: url(#bgp-avg-grad); stroke: none; transition: opacity .3s; }
+  #bgp .bgp-avg circle { fill: var(--ink); stroke: #fff; stroke-width: 2; cursor: pointer; }
+  #bgp .bgp-avg.faded path.a { opacity: 0; }
+  #bgp .bgp-tip { position: absolute; pointer-events: none; background: rgba(15,23,42,.94); color: #fff;
+         font-size: 13px; padding: 8px 11px; border-radius: 10px; white-space: nowrap; opacity: 0;
+         transform: translate(-50%, calc(-100% - 12px)); transition: opacity .15s; box-shadow: 0 8px 20px rgba(0,0,0,.2); }
+  #bgp .bgp-tip small { display: block; color: #94a3b8; font-size: 11px; margin-bottom: 2px; }
+  #bgp .bgp-tip b { color: var(--accent); }
+
+  /* Legende */
+  #bgp .bgp-legend { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .9rem; }
+  #bgp .bgp-chip { display: inline-flex; align-items: center; gap: .4rem; border: 1px solid var(--line); background: var(--soft);
+         border-radius: 999px; padding: .28rem .75rem .28rem .5rem; font-size: .85rem; cursor: pointer; color: var(--ink);
+         transition: all .15s; font-family: inherit; }
+  #bgp .bgp-chip:hover { border-color: #94a3b8; transform: translateY(-1px); }
+  #bgp .bgp-chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  #bgp .bgp-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; box-shadow: 0 0 0 2px #fff; }
+
+  /* Tabelle */
+  #bgp .bgp-tablewrap { overflow-x: auto; }
+  #bgp table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: .9rem; }
+  #bgp th, #bgp td { padding: .6rem .65rem; text-align: right; white-space: nowrap; border-bottom: 1px solid #f1f5f9; }
+  #bgp th.l, #bgp td.l { text-align: left; }
+  #bgp thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600;
+         border-bottom: 1px solid var(--line); }
+  #bgp tbody tr { cursor: pointer; transition: background .15s; }
+  #bgp tbody tr:hover { background: var(--soft); }
+  #bgp tbody tr.sel { background: #eef2ff; }
+  #bgp td.rank { width: 2.5rem; text-align: center; font-weight: 700; color: var(--muted); }
+  #bgp td.name { font-weight: 600; }
+  #bgp td.name span.bgp-dot { margin-right: .5rem; vertical-align: middle; }
+  #bgp td.miss { color: #cbd5e1; }
+  #bgp td.top { font-weight: 700; }
+  #bgp .bgp-bar { display: flex; align-items: center; gap: .5rem; justify-content: flex-end; }
+  #bgp .bgp-bar i { display: block; height: 6px; border-radius: 3px; background: #f1f5f9; width: 70px; overflow: hidden; }
+  #bgp .bgp-bar i em { display: block; height: 100%; border-radius: 3px; }
+  #bgp .bgp-badge { display: inline-block; padding: .15rem .55rem; border-radius: 999px; font-size: .8rem; font-weight: 700; }
+  #bgp .bgp-badge.up { background: #ecfdf5; color: #047857; }
+  #bgp .bgp-badge.down { background: #fef2f2; color: #b91c1c; }
+  #bgp tfoot td { font-weight: 700; color: var(--muted); border-bottom: none; padding-top: .8rem; }
+  #bgp .bgp-hint { font-size: .78rem; color: var(--muted); margin-top: .6rem; }
+</style>
+
+<div class="bgp-hero">
+  <div class="bgp-bits"></div>
+  <div class="bgp-kicker">01000010 · Binary Game</div>
+  <h3>Unser Fortschritt</h3>
+  <p>Wie schnell rechnen wir zwischen Dezimal- und Binärzahlen um? Hier seht ihr eure Ergebnisse über alle Spielrunden hinweg.</p>
+</div>
+
+<div class="bgp-kpis"></div>
+
+<div class="bgp-card">
+  <div class="bgp-card-head">
+    <h4>Verlauf</h4>
+    <span>Name antippen = Kurve hervorheben · gestrichelt = Ø Klasse</span>
+  </div>
+  <div class="bgp-chartwrap">
+    <div class="bgp-chart"></div>
+    <div class="bgp-tip"></div>
+  </div>
+  <div class="bgp-legend"></div>
+</div>
+
+<div class="bgp-card">
+  <div class="bgp-card-head">
+    <h4>Rangliste</h4>
+    <span>sortiert nach Bestwert</span>
+  </div>
+  <div class="bgp-tablewrap"><table class="bgp-table"></table></div>
+  <div class="bgp-hint">– = an diesem Termin nicht gespielt</div>
+</div>
+
+<script>
+(function () {
+  /* ===================== HIER DATEN PFLEGEN ===================== */
+  // Spieltermine in zeitlicher Reihenfolge (JJJJ-MM-TT)
+  const TERMINE = ["2026-09-10", "2026-09-24", "2026-10-08", "2026-11-05", "2026-11-26"];
+
+  // Pro Person ein Eintrag. Reihenfolge der Werte = Reihenfolge der Termine.
+  // null = an dem Termin nicht gespielt
+  const SUS = [
+    { name: "Alex",   punkte: [ 850, 1400, 1950, 2300, 3100] },
+    { name: "Bea",    punkte: [1200, 1600, null, 2800, 3400] },
+    { name: "Can",    punkte: [ 600,  900, 1300, 1500, 2200] },
+    { name: "Dana",   punkte: [1500, 2100, 2600, 3000, 3900] },
+    { name: "Emil",   punkte: [ 400,  750, 1100, null, 1900] },
+    { name: "Finja",  punkte: [ 950, 1300, 1700, 2400, 2700] }
+  ];
+
+  const EINHEIT = "Punkte";
+  /* ============================================================== */
+
+  const FARBEN = ["#6366f1","#f43f5e","#10b981","#f59e0b","#06b6d4","#a855f7",
+                  "#ec4899","#84cc16","#f97316","#3b82f6","#14b8a6","#eab308"];
+  const root = document.getElementById("bgp");
+  const NS = "http://www.w3.org/2000/svg";
+  let auswahl = null;
+
+  const fmtDatum = d => { const t = d.split("-"); return t[2] + "." + t[1] + "."; };
+  const fmtZahl = v => v.toLocaleString("de-DE");
+  const farbe = i => FARBEN[i % FARBEN.length];
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  function svgEl(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  // Binär-Hintergrund im Banner
+  let bits = "";
+  for (let i = 0; i < 900; i++) bits += Math.random() < .5 ? "0" : "1";
+  root.querySelector(".bgp-bits").textContent = bits;
+
+  // Kennwerte je Person
+  const info = SUS.map((s, i) => {
+    const w = s.punkte.filter(v => v != null);
+    return {
+      i: i, name: s.name, punkte: s.punkte,
+      best: w.length ? Math.max(...w) : null,
+      diff: w.length > 1 ? w[w.length - 1] - w[0] : null
+    };
+  });
+  const schnitt = TERMINE.map((_, t) => {
+    const w = SUS.map(s => s.punkte[t]).filter(v => v != null);
+    return w.length ? Math.round(w.reduce((a, b) => a + b, 0) / w.length) : null;
+  });
+  const schnittWerte = schnitt.filter(v => v != null);
+  const maxWert = Math.max(1, ...info.map(p => p.best || 0));
+
+  // Kacheln
+  const top = info.filter(p => p.best != null).sort((a, b) => b.best - a.best)[0];
+  const sprung = info.filter(p => p.diff != null).sort((a, b) => b.diff - a.diff)[0];
+  const schnittLetzt = schnittWerte[schnittWerte.length - 1];
+  const schnittDiff = schnittWerte.length > 1 ? schnittLetzt - schnittWerte[0] : null;
+  const kacheln = [
+    { label: "Spielrunden", value: TERMINE.length,
+      note: `seit dem <b>${fmtDatum(TERMINE[0])}</b>` },
+    { label: "Ø Klasse zuletzt", value: schnittLetzt != null ? fmtZahl(schnittLetzt) : "–",
+      note: schnittDiff != null ? `<span class="bgp-pos">${schnittDiff >= 0 ? "+" : ""}${fmtZahl(schnittDiff)}</span> seit Start` : "" },
+    { label: "Highscore", value: top ? fmtZahl(top.best) : "–",
+      note: top ? `von <b>${esc(top.name)}</b>` : "" },
+    { label: "Größter Fortschritt", value: sprung ? "+" + fmtZahl(sprung.diff) : "–",
+      note: sprung ? `von <b>${esc(sprung.name)}</b>` : "" }
+  ];
+  root.querySelector(".bgp-kpis").innerHTML = kacheln.map(k =>
+    `<div class="bgp-kpi"><div class="bgp-kpi-label">${k.label}</div>
+     <div class="bgp-kpi-value">${k.value}</div><div class="bgp-kpi-note">${k.note}</div></div>`).join("");
+
+  // Skala
+  const grob = maxWert / 5;
+  const p10 = Math.pow(10, Math.floor(Math.log10(grob)));
+  const n = grob / p10;
+  const schritt = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p10;
+  const yMax = Math.ceil(maxWert / schritt) * schritt;
+
+  const W = 860, H = 380, ml = 56, mr = 24, mt = 24, mb = 42;
+  const iw = W - ml - mr, ih = H - mt - mb;
+  const x = i => TERMINE.length === 1 ? ml + iw / 2 : ml + i * iw / (TERMINE.length - 1);
+  const y = v => mt + ih - (v / yMax) * ih;
+
+  // Weiche Kurve durch Punkte (ohne Überschwingen)
+  function kurve(pts) {
+    if (!pts.length) return "";
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    for (let k = 1; k < pts.length; k++) {
+      const [x0, y0] = pts[k - 1], [x1, y1] = pts[k], mx = (x0 + x1) / 2;
+      d += ` C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
+    }
+    return d;
+  }
+
+  const svg = svgEl("svg", { class: "bgp-main", viewBox: `0 0 ${W} ${H}`, role: "img",
+    "aria-label": "Liniendiagramm: Punkte im Binary Game pro Spielrunde" });
+  root.querySelector(".bgp-chart").appendChild(svg);
+  const defs = svgEl("defs", {}, svg);
+  function verlauf(id, col, staerke) {
+    const g = svgEl("linearGradient", { id: id, x1: 0, x2: 0, y1: 0, y2: 1 }, defs);
+    svgEl("stop", { offset: "0%", "stop-color": col, "stop-opacity": staerke }, g);
+    svgEl("stop", { offset: "100%", "stop-color": col, "stop-opacity": 0 }, g);
+  }
+  verlauf("bgp-avg-grad", "#6366f1", .14);
+
+  const grid = svgEl("g", { class: "bgp-grid" }, svg);
+  const achse = svgEl("g", { class: "bgp-axis" }, svg);
+  for (let v = 0; v <= yMax; v += schritt) {
+    svgEl("line", { x1: ml, x2: W - mr, y1: y(v), y2: y(v) }, grid);
+    svgEl("text", { x: ml - 10, y: y(v) + 4, "text-anchor": "end" }, achse).textContent = fmtZahl(v);
+  }
+  TERMINE.forEach((d, i) => {
+    svgEl("text", { x: x(i), y: H - 14, "text-anchor": "middle" }, achse).textContent = fmtDatum(d);
+  });
+  const guide = svgEl("line", { class: "bgp-guide", y1: mt, y2: mt + ih, x1: 0, x2: 0 }, svg);
+
+  const tip = root.querySelector(".bgp-tip");
+  const wrap = root.querySelector(".bgp-chartwrap");
+  function zeigeTip(circle, i, label, v, col) {
+    const r = circle.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+    tip.innerHTML = `<small>${fmtDatum(TERMINE[i])}</small><span style="color:${col}">●</span> ${esc(label)}: <b>${fmtZahl(v)}</b> ${EINHEIT}`;
+    tip.style.left = (r.left + r.width / 2 - w.left) + "px";
+    tip.style.top = (r.top - w.top) + "px";
+    tip.style.opacity = 1;
+    guide.setAttribute("x1", x(i)); guide.setAttribute("x2", x(i));
+    guide.style.opacity = 1;
+  }
+  function versteckeTip() { tip.style.opacity = 0; guide.style.opacity = 0; }
+
+  const animiert = [];
+  function zeichneReihe(werte, gruppe, col, label, gradId) {
+    const pts = [];
+    werte.forEach((v, i) => { if (v != null) pts.push([x(i), y(v), i, v]); });
+    if (!pts.length) return;
+    const d = kurve(pts);
+    const unten = mt + ih;
+    svgEl("path", { class: "a", d: `${d} L${pts[pts.length - 1][0]},${unten} L${pts[0][0]},${unten} Z`,
+                    fill: gradId ? `url(#${gradId})` : "none" }, gruppe);
+    const linie = svgEl("path", { class: "l", d: d, stroke: col }, gruppe);
+    animiert.push(linie);
+    pts.forEach(([px, py, i, v]) => {
+      const c = svgEl("circle", { cx: px, cy: py, r: 5, fill: col }, gruppe);
+      c.addEventListener("mouseenter", () => zeigeTip(c, i, label, v, col));
+      c.addEventListener("mouseleave", versteckeTip);
+      c.addEventListener("click", e => { e.stopPropagation(); zeigeTip(c, i, label, v, col); });
+    });
+  }
+
+  const avgG = svgEl("g", { class: "bgp-avg" }, svg);
+  zeichneReihe(schnitt, avgG, "#0f172a", "Ø Klasse", null);
+  const linienEbene = svgEl("g", {}, svg);
+  const gruppen = info.map(p => {
+    const g = svgEl("g", { class: "bgp-line" }, linienEbene);
+    verlauf("bgp-g" + p.i, farbe(p.i), .22);
+    zeichneReihe(p.punkte, g, farbe(p.i), p.name, "bgp-g" + p.i);
+    g.addEventListener("click", () => waehle(p.i));
+    return g;
+  });
+  svg.appendChild(avgG); // Durchschnitt oben
+
+  // Linien beim Laden "zeichnen"
+  animiert.forEach((path, k) => {
+    if (avgG.contains(path)) return; // gestrichelte Linie nicht animieren
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    path.getBoundingClientRect();
+    path.style.transition = `stroke-dashoffset 1.1s ease ${k * 0.06}s, opacity .25s, stroke-width .25s`;
+    path.style.strokeDashoffset = 0;
+  });
+
+  // Legende
+  const legende = root.querySelector(".bgp-legend");
+  const chips = info.map(p => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "bgp-chip";
+    b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `<span class="bgp-dot" style="background:${farbe(p.i)}"></span>${esc(p.name)}`;
+    b.addEventListener("click", () => waehle(p.i));
+    legende.appendChild(b);
+    return b;
+  });
+
+  // Mini-Verlauf für die Tabelle
+  function sparkline(werte, col) {
+    const w = 90, h = 26, pad = 3;
+    const pts = [];
+    werte.forEach((v, i) => {
+      if (v == null) return;
+      const px = TERMINE.length === 1 ? w / 2 : pad + i * (w - 2 * pad) / (TERMINE.length - 1);
+      pts.push([px, h - pad - (v / yMax) * (h - 2 * pad)]);
+    });
+    if (!pts.length) return "";
+    const last = pts[pts.length - 1];
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="vertical-align:middle">
+      <path d="${kurve(pts)}" fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="${last[0]}" cy="${last[1]}" r="2.8" fill="${col}"/></svg>`;
+  }
+
+  // Tabelle (Rangliste)
+  const rangliste = info.slice().sort((a, b) => (b.best || 0) - (a.best || 0));
+  const medaillen = ["🥇", "🥈", "🥉"];
+  const tab = root.querySelector(".bgp-table");
+  let html = `<thead><tr><th>#</th><th class="l">Name</th>` +
+    TERMINE.map(d => `<th>${fmtDatum(d)}</th>`).join("") +
+    `<th class="l">Verlauf</th><th>Bestwert</th><th>Entwicklung</th></tr></thead><tbody>`;
+  rangliste.forEach((p, r) => {
+    const col = farbe(p.i);
+    html += `<tr data-i="${p.i}"><td class="rank">${medaillen[r] || r + 1}</td>
+      <td class="l name"><span class="bgp-dot" style="background:${col}"></span>${esc(p.name)}</td>`;
+    p.punkte.forEach(v => {
+      html += v == null ? `<td class="miss">–</td>` : `<td class="${v === p.best ? "top" : ""}">${fmtZahl(v)}</td>`;
+    });
+    html += `<td class="l">${sparkline(p.punkte, col)}</td>`;
+    html += p.best == null ? "<td>–</td>" :
+      `<td><div class="bgp-bar"><i><em style="width:${(p.best / maxWert) * 100}%;background:${col}"></em></i><b>${fmtZahl(p.best)}</b></div></td>`;
+    html += p.diff == null ? "<td>–</td>" :
+      `<td><span class="bgp-badge ${p.diff >= 0 ? "up" : "down"}">${p.diff >= 0 ? "▲ +" : "▼ "}${fmtZahl(p.diff)}</span></td>`;
+    html += "</tr>";
+  });
+  html += `</tbody><tfoot><tr><td></td><td class="l">Ø Klasse</td>` +
+    schnitt.map(v => `<td>${v == null ? "–" : fmtZahl(v)}</td>`).join("") +
+    `<td class="l">${sparkline(schnitt, "#0f172a")}</td><td></td><td></td></tr></tfoot>`;
+  tab.innerHTML = html;
+  const zeilen = Array.from(tab.querySelectorAll("tbody tr"));
+  zeilen.forEach(tr => tr.addEventListener("click", () => waehle(+tr.dataset.i)));
+
+  // Auswahl / Hervorhebung
+  function waehle(i) {
+    auswahl = (auswahl === i) ? null : i;
+    gruppen.forEach((g, k) => {
+      g.classList.toggle("dim", auswahl !== null && k !== auswahl);
+      g.classList.toggle("hi", k === auswahl);
+    });
+    avgG.classList.toggle("faded", auswahl !== null);
+    if (auswahl !== null) linienEbene.appendChild(gruppen[auswahl]);
+    chips.forEach((c, k) => c.setAttribute("aria-pressed", k === auswahl ? "true" : "false"));
+    zeilen.forEach(tr => tr.classList.toggle("sel", +tr.dataset.i === auswahl));
+  }
+  svg.addEventListener("click", versteckeTip);
+})();
+</script>
+</div>
+
+</body>
+</html>
